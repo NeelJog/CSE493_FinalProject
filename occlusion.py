@@ -66,6 +66,18 @@ def setup():
     return pipeline, config
 
 
+def resize_img(color_img):
+    # resize the virtual object to fit in the color image
+    virt_image = cv2.imread("virtual_image.png")
+    side = int(color_image.shape[0] * constants.virt_obj_scale_factor)
+    
+    virt_image = cv2.resize(virt_image, (side, side))
+    virt_image_mask = prepare_images(virt_image)
+    cv2.imwrite("virtual_image.png", virt_image)
+    cv2.imwrite("virtual_image_mask.png", virt_image_mask)
+    return virt_image, virt_image_mask
+
+
 if __name__ == "__main__":
     # Get the configuration and pipeline
     pipeline, config = setup()
@@ -76,7 +88,7 @@ if __name__ == "__main__":
     # Get the depth sensor's depth scale
     depth_sensor = profile.get_device().first_depth_sensor()
     depth_scale = depth_sensor.get_depth_scale()
-
+    print(depth_scale)
 
     # We will be removing the background of objects more than
     #  clipping_distance_in_meters meters away
@@ -88,10 +100,10 @@ if __name__ == "__main__":
     # The "align_to" is the stream type to which we plan to align depth frames.
     align_to = rs.stream.color
     align = rs.align(align_to)
-
+    counter = 0
     # Streaming loop
     try:
-        while True:
+        while counter < 10:
             # Get frameset of color and depth
             frames = pipeline.wait_for_frames()
 
@@ -107,48 +119,32 @@ if __name__ == "__main__":
                 continue
             
             # Get the images inside the frame
-            depth_pre_image = np.asanyarray(aligned_depth_frame.get_data())
-            scaled = cv2.convertScaleAbs(depth_pre_image, alpha=0.03)
-            # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
-            depth_image = cv2.applyColorMap(scaled, cv2.COLORMAP_JET)
+            depth_info = np.asanyarray(aligned_depth_frame.get_data())
             color_image = np.asanyarray(color_frame.get_data())
 
-            # resize the virtual object to fit in the color image
-            virt_image = cv2.imread("virtual_image.png")
-            side = int(color_image.shape[0] * constants.virt_obj_scale_factor)
-            needed_size = (side, side)
+            f_path_1 = "sample_frames/" + str(counter) + ".png"
+            cv2.imwrite(f_path_1, color_image)
+            f_path_2 = "sample_depth_frames/" + str(counter) + ".txt"
+            np.savetxt(f_path_2, depth_info, delimiter=",")
+            counter += 1
+            # # Resize the mask to fit in the color image
+            # virt_image, virt_image_mask = resize_img(color_image)
+
+            # # Crop out the central part of the color image
+            # a_h, a_w, a_d = color_image.shape
+            # virt_h, virt_w, virt_d = virt_image.shape
+            # start_x = int((a_w - virt_w) / 2)
+            # start_y = int((a_h - virt_h) / 2)
+            # end_x = int(start_x + virt_w)
+            # end_y = int(start_y + virt_h)
+            # color_image[start_y:end_y, start_x:end_x, :] = virt_image[:, :, :]
             
-            virt_image = cv2.resize(virt_image, (side, side))
-            virt_image_mask = prepare_images(virt_image)
-            cv2.imwrite("virtual_image.png", virt_image)
-            cv2.imwrite("virtual_image_mask.png", virt_image_mask)
-
-            # Crop out the central part of the color image
-            a_h, a_w, a_d = color_image.shape
-            virt_h, virt_w, virt_d = virt_image.shape
-            start_x = int((a_w - virt_w) / 2)
-            start_y = int((a_h - virt_h) / 2)
-            end_x = int(start_x + virt_w)
-            end_y = int(start_y + virt_h)
-            color_image[start_y:end_y, start_x:end_x, :] = virt_image[:, :, :]
-            cv2.imshow("img", color_image)
-            # # Remove background - Set pixels further than clipping_distance to grey
-            # grey_color = 153
-            # depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
-            # bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
-
-            # Render images:
-            #   depth align to color on left
-            #   depth on right
-            # depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-            # images = np.hstack((bg_removed, depth_colormap))
-
-            # cv2.namedWindow('Align Example', cv2.WINDOW_NORMAL)
-            # cv2.imshow('Align Example', depth_image)
-            key = cv2.waitKey(1)
-            # Press esc or 'q' to close the image window
-            if key & 0xFF == ord('q') or key == 27:
-                cv2.destroyAllWindows()
-                break
+            # cv2.imshow("img", color_image)
+            # key = cv2.waitKey(1)
+            # # Press esc or 'q' to close the image window
+            # if key & 0xFF == ord('q') or key == 27:
+            #     cv2.destroyAllWindows()
+            #     break
+            # break
     finally:
         pipeline.stop()
