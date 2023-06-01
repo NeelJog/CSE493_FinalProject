@@ -13,6 +13,7 @@ import numpy as np
 import cv2
 # Constants used
 import constants
+from distance_image_generator import *
 
 
 def prepare_images(virt_img):
@@ -99,6 +100,10 @@ if __name__ == "__main__":
     # The "align_to" is the stream type to which we plan to align depth frames.
     align_to = rs.stream.color
     align = rs.align(align_to)
+
+    mask = load_mask()
+    mask_loc_in_image = None
+
     # Streaming loop
     try:
         while True:
@@ -122,6 +127,15 @@ if __name__ == "__main__":
             depth_info_in_meters = depth_info / 1000
             color_image = np.asanyarray(color_frame.get_data())
 
+            if mask_loc_in_image is None:
+                mask_loc_in_image = get_mask_loc_in_image(color_image, mask)
+
+            image_mask_depth = depth_info_in_meters[ mask_loc_in_image[0] : mask_loc_in_image[1], mask_loc_in_image[2] : mask_loc_in_image[3] ]
+            distance_image = generate_distance_image(image_mask_depth)
+            cv2.imshow("Color Image", color_image)
+            cv2.imshow("Distance Image", distance_image)
+
+            '''
             # Resize the mask to fit in the color image
             virt_image, virt_image_mask = resize_img(color_image)
 
@@ -144,8 +158,9 @@ if __name__ == "__main__":
                     v_o_depth = constants.virtual_obj_depth_in_meters
                     if (r == 255 & g == 255 & b == 255) | (depth < v_o_depth):
                         blended[h, w] = color_image[h, w]
+            '''
 
-            cv2.imshow("img", blended)
+            
             key = cv2.waitKey(1)
             # Press esc or 'q' to close the image window
             if key & 0xFF == ord('q') or key == 27:
