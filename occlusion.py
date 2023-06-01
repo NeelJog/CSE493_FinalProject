@@ -1,8 +1,8 @@
-## License: Apache 2.0. See LICENSE file in root directory.
-## Copyright(c) 2017 Intel Corporation. All Rights Reserved.
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
 #####################################################
-##              Align Depth to Color               ##
+#              Align Depth to Color               ##
 #####################################################
 
 # First import the library
@@ -70,7 +70,7 @@ def resize_img(color_img):
     # resize the virtual object to fit in the color image
     virt_image = cv2.imread("virtual_image.png")
     side = int(color_image.shape[0] * constants.virt_obj_scale_factor)
-    
+
     virt_image = cv2.resize(virt_image, (side, side))
     virt_image_mask = prepare_images(virt_image)
     cv2.imwrite("virtual_image.png", virt_image)
@@ -88,11 +88,10 @@ if __name__ == "__main__":
     # Get the depth sensor's depth scale
     depth_sensor = profile.get_device().first_depth_sensor()
     depth_scale = depth_sensor.get_depth_scale()
-    print(depth_scale)
 
     # We will be removing the background of objects more than
     #  clipping_distance_in_meters meters away
-    clipping_distance_in_meters = 1 #1 meter
+    clipping_distance_in_meters = 1  # 1 meter
     clipping_distance = clipping_distance_in_meters / depth_scale
 
     # Create an align object
@@ -100,10 +99,9 @@ if __name__ == "__main__":
     # The "align_to" is the stream type to which we plan to align depth frames.
     align_to = rs.stream.color
     align = rs.align(align_to)
-    counter = 0
     # Streaming loop
     try:
-        while counter < 10:
+        while True:
             # Get frameset of color and depth
             frames = pipeline.wait_for_frames()
 
@@ -111,40 +109,47 @@ if __name__ == "__main__":
             aligned_frames = align.process(frames)
 
             # Get aligned frames
-            aligned_depth_frame = aligned_frames.get_depth_frame() # a 640x480 depth image
+            aligned_depth_frame = aligned_frames.get_depth_frame()
+            # a 640x480 depth image
             color_frame = aligned_frames.get_color_frame()
 
             # Validate that both frames are valid
             if not aligned_depth_frame or not color_frame:
                 continue
-            
+
             # Get the images inside the frame
             depth_info = np.asanyarray(aligned_depth_frame.get_data())
+            depth_info_in_meters = depth_info / 1000
             color_image = np.asanyarray(color_frame.get_data())
 
-            f_path_1 = "sample_frames/" + str(counter) + ".png"
-            cv2.imwrite(f_path_1, color_image)
-            f_path_2 = "sample_depth_frames/" + str(counter) + ".txt"
-            np.savetxt(f_path_2, depth_info, delimiter=",")
-            counter += 1
-            # # Resize the mask to fit in the color image
-            # virt_image, virt_image_mask = resize_img(color_image)
+            # Resize the mask to fit in the color image
+            virt_image, virt_image_mask = resize_img(color_image)
 
-            # # Crop out the central part of the color image
-            # a_h, a_w, a_d = color_image.shape
-            # virt_h, virt_w, virt_d = virt_image.shape
-            # start_x = int((a_w - virt_w) / 2)
-            # start_y = int((a_h - virt_h) / 2)
-            # end_x = int(start_x + virt_w)
-            # end_y = int(start_y + virt_h)
-            # color_image[start_y:end_y, start_x:end_x, :] = virt_image[:, :, :]
-            
-            # cv2.imshow("img", color_image)
-            # key = cv2.waitKey(1)
-            # # Press esc or 'q' to close the image window
-            # if key & 0xFF == ord('q') or key == 27:
-            #     cv2.destroyAllWindows()
-            #     break
-            # break
+            # Crop out the central part of the color image
+            a_h, a_w, a_d = color_image.shape
+            virt_h, virt_w, virt_d = virt_image.shape
+            start_x = int((a_w - virt_w) / 2)
+            start_y = int((a_h - virt_h) / 2)
+            end_x = int(start_x + virt_w)
+            end_y = int(start_y + virt_h)
+
+            # See where we need to borrow from color image
+            blended = np.copy(color_image)
+            blended[start_y:end_y, start_x:end_x, :] = virt_image[:, :, :]
+            height, width, _ = blended.shape
+            for h in range(start_y, end_y):
+                for w in range(start_x, end_x):
+                    r, g, b = blended[h, w]
+                    depth = depth_info_in_meters[h, w]
+                    v_o_depth = constants.virtual_obj_depth_in_meters
+                    if (r == 255 & g == 255 & b == 255) | (depth < v_o_depth):
+                        blended[h, w] = color_image[h, w]
+
+            cv2.imshow("img", blended)
+            key = cv2.waitKey(1)
+            # Press esc or 'q' to close the image window
+            if key & 0xFF == ord('q') or key == 27:
+                cv2.destroyAllWindows()
+                break
     finally:
         pipeline.stop()
