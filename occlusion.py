@@ -13,7 +13,10 @@ import numpy as np
 import cv2
 # Constants used
 import constants
+# Get the distance image
 from distance_image_generator import *
+# Import the histagram stuff
+from histograms import *
 
 
 def prepare_images(virt_img):
@@ -132,8 +135,9 @@ if __name__ == "__main__":
 
             image_mask_depth = depth_info_in_meters[ mask_loc_in_image[0] : mask_loc_in_image[1], mask_loc_in_image[2] : mask_loc_in_image[3] ]
             distance_image = generate_distance_image(image_mask_depth)
-            cv2.imshow("Color Image", color_image)
-            cv2.imshow("Distance Image", distance_image)
+            
+            color_image_needed = color_image[mask_loc_in_image[0]: mask_loc_in_image[1], mask_loc_in_image[2]:mask_loc_in_image[3]]
+            get_Rf_Rb(color_image_needed, distance_image)
 
             '''
             # Resize the mask to fit in the color image
