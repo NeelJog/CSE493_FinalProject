@@ -13,3 +13,5 @@ automatic_threshold = 0.05
 closing_kernel_size = (5, 5)
 guided_window_radius = 8
 guided_regulization = 0.05
+trimap_size = 10
+num_erosion = 3

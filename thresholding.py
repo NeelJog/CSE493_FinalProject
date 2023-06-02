@@ -28,7 +28,6 @@ def perform_thresholding(images):
         t_new = (updated_fore + updated_back)/2.0
 
     _, threshold_image = cv2.threshold(cost_image, (t_old + t_new)/2.0, 255, cv2.THRESH_BINARY)
-    print(threshold_image.shape, threshold_image.dtype, np.mean(threshold_image), np.std(threshold_image))
     images["thresholded_image"] = threshold_image
 
 def perform_filtering(images):
@@ -37,6 +36,10 @@ def perform_filtering(images):
     # Perform a closing operation
     kernel = np.ones(constants.closing_kernel_size, np.uint8)
     closing_image = cv2.morphologyEx(threshold_image, cv2.MORPH_CLOSE, kernel)
+    images["filtered_image"] = closing_image
 
+    '''
     # Apply the guided filtering
-    guided_filter(images["image_center"], closing_image, constants.guided_window_radius, constants.guided_regulization)
+    images["filtered_image"] = guided_filter(images["image_center"], closing_image, 
+        constants.guided_window_radius, constants.guided_regulization)
+    '''

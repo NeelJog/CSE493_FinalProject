@@ -15,7 +15,6 @@ class ImageReader:
         original_image = cv2.imread("virtual_image.png")
         virt_mask = cv2.imread("virtual_image_mask.png")
         virt_mask = 255 - cv2.cvtColor(virt_mask, cv2.COLOR_BGR2GRAY)
-        print("Virtual values", np.mean(virt_mask), np.std(virt_mask))
         
         # Crop the original image to create the virtual image
         image_height, image_width, _ = original_image.shape
