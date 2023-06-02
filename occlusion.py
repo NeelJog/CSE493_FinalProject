@@ -137,7 +137,6 @@ if __name__ == "__main__":
             distance_image = generate_distance_image(image_mask_depth)
             
             color_image_needed = color_image[mask_loc_in_image[0]: mask_loc_in_image[1], mask_loc_in_image[2]:mask_loc_in_image[3]]
-            get_Rf_Rb(color_image_needed, distance_image)
 
             '''
             # Resize the mask to fit in the color image
@@ -165,7 +164,7 @@ if __name__ == "__main__":
             '''
 
             
-            key = cv2.waitKey(1)
+            key = cv2.waitKey(0)
             # Press esc or 'q' to close the image window
             if key & 0xFF == ord('q') or key == 27:
                 cv2.destroyAllWindows()

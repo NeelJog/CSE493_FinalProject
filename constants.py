@@ -4,3 +4,7 @@ virtual_obj_depth_in_meters = 0.45
 color_black_threshold = 10
 epsilon = 1e-5
 distance_constant_val = 2
+color_histogram_bins = 180
+max_hue_value = 180
+color_weight = 1.0
+depth_weight = 1.0

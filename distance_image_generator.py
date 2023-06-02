@@ -2,6 +2,7 @@ import cv2
 import constants
 import numpy as np
 import os
+from histograms import *
 
 
 def load_mask():
@@ -48,10 +49,9 @@ def generate_distance_image(real_depth_data):
             x_p = (constants.virtual_obj_depth_in_meters)/(real_depth_val + constants.epsilon)
             return_val = ((constants.distance_constant_val ** x_p) - 1)/(constants.distance_constant_val - 1)
         
-        return return_val
+        return 1.0 * return_val
 
     distance_image = np.vectorize(get_distance_val)(real_depth_data)
-
     return distance_image
 
 
@@ -66,20 +66,24 @@ def runner():
         curr_frame = cv2.imread(image_file_path)
         depth_data = np.loadtxt(depth_file_path, delimiter=',')
         depth_data = depth_data
-        print("Mean depth", np.mean(depth_data), "Std dev", np.std(depth_data))
 
         mask = load_mask()
         mask_loc_in_image = get_mask_loc_in_image(curr_frame, mask)
-        image_mask_depth = depth_data[ mask_loc_in_image[0] : mask_loc_in_image[1], mask_loc_in_image[2] : mask_loc_in_image[3] ]
 
-        print("Mask depth data - Mean:", np.mean(image_mask_depth), "Std dev:", np.std(image_mask_depth))
-        print("Virtual object depth: ", constants.virtual_obj_depth_in_meters)
+        depth_mask = depth_data[ mask_loc_in_image[0] : mask_loc_in_image[1], mask_loc_in_image[2] : mask_loc_in_image[3] ]
+        image_mask = curr_frame[ mask_loc_in_image[0] : mask_loc_in_image[1], mask_loc_in_image[2] : mask_loc_in_image[3], : ]
 
-        distance_image = generate_distance_image(image_mask_depth)
+        distance_image = generate_distance_image(depth_mask)
+        foreground_prob, background_prob = get_histogram_prob_images(image_mask, distance_image)
 
+        '''
         cv2.imshow("Current Frame", curr_frame)
         cv2.imshow("Binary Mask", mask)
         cv2.imshow("Distance Image", distance_image)
+        cv2.imshow("Foreground Image", foreground_prob)
+        cv2.imshow("Background Image", background_prob)
+        '''
+
         if cv2.waitKey(0) & 0xFF == ord('q'):
             break
 
