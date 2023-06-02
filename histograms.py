@@ -25,7 +25,7 @@ def get_probability_image(color_image, distance_image, region_mask):
             return 0.0
 
         bin_num = int((constants.color_histogram_bins * color_value)/constants.max_hue_value)
-        return color_probs[bin_num]
+        return color_probs[bin_num][0]
     
     color_probability = np.vectorize(get_probability_value)(image_hue)
     color_probability_int = (255 * color_probability).astype(np.uint8)
