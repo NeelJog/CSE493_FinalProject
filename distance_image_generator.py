@@ -36,7 +36,7 @@ def get_mask_loc_in_image(image, binary_mask):
     return [start_y, end_y, start_x, end_x]
 
 
-def generate_distance_image(real_depth_data):
+def generate_distance_image(images):
 
     def get_distance_val(real_depth_val):
         return_val = 0.0
@@ -51,9 +51,7 @@ def generate_distance_image(real_depth_data):
         
         return 1.0 * return_val
 
-    distance_image = np.vectorize(get_distance_val)(real_depth_data)
-    return distance_image
-
+    images["distance_image"] = np.vectorize(get_distance_val)(images["depth_center"])
 
 def runner():
     frames_dir = "sample_frames"

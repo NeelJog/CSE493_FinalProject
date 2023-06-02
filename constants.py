@@ -1,4 +1,4 @@
-read_format = "real"
+read_format = "dummy"
 virt_obj_scale_factor = 0.5
 virtual_distance_to_m = 1000
 virtual_obj_depth_in_meters = 0.45
@@ -8,3 +8,8 @@ distance_constant_val = 2
 color_histogram_bins = 180
 max_hue_value = 180
 color_weight = 0.5
+cost_method = "single"
+automatic_threshold = 0.05
+closing_kernel_size = (5, 5)
+guided_window_radius = 8
+guided_regulization = 0.05

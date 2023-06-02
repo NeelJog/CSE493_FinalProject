@@ -14,7 +14,8 @@ class ImageReader:
         # Read in the files
         original_image = cv2.imread("virtual_image.png")
         virt_mask = cv2.imread("virtual_image_mask.png")
-        virt_mask = cv2.cvtColor(virt_mask, cv2.COLOR_BGR2GRAY)
+        virt_mask = 255 - cv2.cvtColor(virt_mask, cv2.COLOR_BGR2GRAY)
+        print("Virtual values", np.mean(virt_mask), np.std(virt_mask))
         
         # Crop the original image to create the virtual image
         image_height, image_width, _ = original_image.shape
@@ -32,23 +33,28 @@ class ImageReader:
     def get_next(self):
         return None
     
-    def finish():
+    def finish(self):
         pass
     
     def add_in_virtual_data(self, images):
-        if self.virt_center_coordinates is None:
-            real_image = images["real_image"]
+        real_image = images["real_image"]
+        depth_image = images["depth_image"]
 
+        if self.virt_center_coordinates is None:
             # Get the coordinates to place the ball in the video
             real_height, real_width, _ = real_image.shape
             virt_height, virt_width = self.virt_mask.shape
             start_y, start_x = int((real_height - virt_height)/2), int((real_width - virt_width)/2)
             end_y, end_x = start_y + virt_height, start_x + virt_width
-            self.virt_center_coordinates = np.array([start_y, end_y, start_y, end_x])
+            self.virt_center_coordinates = np.array([start_y, end_y, start_x, end_x])
         
         images["virt_center_coordinates"] = self.virt_center_coordinates
         images["virt_image"] = self.virt_image
         images["virt_mask"] = self.virt_mask
+
+        coords = self.virt_center_coordinates
+        images["image_center"] = real_image[  coords[0] : coords[1], coords[2] : coords[3]]
+        images["depth_center"] = depth_image[ coords[0] : coords[1], coords[2] : coords[3] ]
 
 class CameraReader(ImageReader):
 
@@ -118,6 +124,14 @@ class CameraReader(ImageReader):
         # Get the images inside the frame
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(aligned_depth_frame.get_data()) * self.depth_scale
+
+        # Store the depth and image data
+        images = {}
+        images["real_image"] = color_image
+        images["depth_image"] = depth_image
+        self.add_in_virtual_data(images)
+
+        return images
     
     def finish(self):
         self.pipeline.stop()
@@ -147,7 +161,8 @@ class DummyReader(ImageReader):
         images["real_image"] = cv2.imread(image_file_path)
         images["depth_image"] = np.loadtxt(depth_file_path, delimiter=',')
         self.add_in_virtual_data(images)
-
+        
+        self.counter += 1
         return images
 
 

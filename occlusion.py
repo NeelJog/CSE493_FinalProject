@@ -17,7 +17,19 @@ import constants
 from distance_image_generator import *
 from histograms import *
 from reader import *
+from cost_calculator import *
+from thresholding import *
 
+tranforms_to_apply = [generate_distance_image, get_histogram_prob_images, 
+    perform_cost_calculation, perform_thresholding, perform_filtering]
+keys_to_ignore = ["virt_center_coordinates"]
+
+def visualize_output(images):
+    for key, value in images.items():
+        if key in keys_to_ignore:
+            continue
+            
+        cv2.imshow(key, value)
 
 if __name__ == "__main__":
     # Get the reader
@@ -28,7 +40,6 @@ if __name__ == "__main__":
         reader = CameraReader()
     
     print("Finished setting up reader of type", constants.read_format)
-    raise Exception("done")
 
     try:
         while reader.has_next():
@@ -38,7 +49,12 @@ if __name__ == "__main__":
                 print("Got none from get_next")
                 break
 
-            print(images.keys())
+            for tranformation in tranforms_to_apply:
+                tranformation(images)
+            
+            visualize_output(images)
+            if cv2.waitKey(0) & 0xFF == ord('q'):
+                break
 
             '''
             # Resize the mask to fit in the color image
@@ -63,12 +79,8 @@ if __name__ == "__main__":
                     v_o_depth = constants.virtual_obj_depth_in_meters
                     if (r == 255 & g == 255 & b == 255) | (depth < v_o_depth):
                         blended[h, w] = color_image[h, w]
-            
-            key = cv2.waitKey(0)
-            # Press esc or 'q' to close the image window
-            if key & 0xFF == ord('q') or key == 27:
-                cv2.destroyAllWindows()
-                break
             '''
     finally:
         reader.finish()
+    
+    cv2.destroyAllWindows()
