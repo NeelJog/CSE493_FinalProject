@@ -6,5 +6,4 @@ epsilon = 1e-5
 distance_constant_val = 2
 color_histogram_bins = 180
 max_hue_value = 180
-color_weight = 1.0
-depth_weight = 1.0
+color_weight = 0.5

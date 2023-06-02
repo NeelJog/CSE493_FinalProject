@@ -32,7 +32,8 @@ def get_probability_image(color_image, distance_image, region_mask):
     color_mask = cv2.bitwise_and(color_probability_int, region_mask)
     color_mask = color_mask/255.0
 
-    return constants.color_weight * color_mask + constants.depth_weight * depth_mask
+    print(np.mean(color_mask), np.std(color_mask), np.mean(depth_mask), np.mean(depth_mask))
+    return constants.color_weight * color_mask + (1.0 - constants.color_weight) * depth_mask
 
 def get_histogram_prob_images(color_image, distance_image):
 
