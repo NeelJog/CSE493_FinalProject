@@ -1,6 +1,5 @@
 # Code borrowed from https://github.com/lnugraha/trimap_generator/blob/master/trimap_module.py
 
-#!/usr/bin/env python
 import cv2, os, sys
 import numpy as np
 import constants
@@ -130,15 +129,26 @@ def trimap(image, size, erosion=False):
     #############################################
     # Ensures only three pixel values available #
     # TODO: Optimization with Cython            #
-    #############################################
-    remake_mask = np.bitwise_and(remake != 0, remake != 255)
-    print(remake.shape, remake.dtype, remake_mask.shape, remake_mask.dtype)    
-    optimized_remake = np.where(remake_mask, 127, remake)
+    #############################################    
+    for i in range(0,row):
+        for j in range (0,col):
+            if (remake[i,j] != 0 and remake[i,j] != 255):
+                remake[i,j] = 127
 
-    return optimized_remake
+    return remake
 
 def perform_trimap(images):
-    filtered_image = images["filtered_image"]
+    filtered_image = images["filtered_image"].astype(np.uint8)
 
-    images["trimap_image"] = trimap(filtered_image, constants.trimap_size, 
-        erosion = constants.num_erosion)
+    # Extract the edges
+    edges = cv2.Canny(filtered_image.astype(np.uint8), constants.canny_lower_bound, constants.canny_upper_bound)
+    images["filtered_edges"] = edges
+
+    # Dilate the edges
+    kernel = np.ones(constants.dilation_kernel_size, np.uint8)
+    dilated_image = cv2.dilate(edges, kernel)
+    images["dilated_image"] = dilated_image
+
+    # Combine the image
+    combined_image = dilated_image + filtered_image + (255 * np.bitwise_and(dilated_image, filtered_image)).astype(np.uint8)
+    images["trimap_image"] = trimap(combined_image, constants.trimap_size)/255.0

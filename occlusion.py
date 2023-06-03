@@ -21,18 +21,28 @@ from reader import *
 from cost_calculator import *
 from thresholding import *
 from trimap_generator import *
+from alpha_matting import *
+from composition import *
 
 tranforms_to_apply = [generate_distance_image, get_histogram_prob_images, 
-    perform_cost_calculation, perform_thresholding, perform_filtering, perform_trimap]
+    perform_cost_calculation, perform_thresholding, perform_filtering, perform_trimap,
+    perform_alpha_matting, perform_composition]
 keys_to_ignore = ["virt_center_coordinates"]
 
 def visualize_output(images):
     for key, value in images.items():
-        if key in keys_to_ignore:
-            continue
-        
-        print(key, value.shape)
-        cv2.imshow(key, value)
+        print(key, value.shape, np.mean(value), np.std(value))
+        '''
+        if key not in keys_to_ignore:
+            cv2.imshow(key, value)
+        '''
+
+    exit = False
+    cv2.imshow("Output Image", images["combined_image"])
+    if cv2.waitKey(0) & 0xFF == ord('q'):
+        exit = True
+    
+    return exit
 
 if __name__ == "__main__":
     # Get the reader
@@ -58,8 +68,7 @@ if __name__ == "__main__":
                 time_taken = (time.time() - start_time)
                 print("Transformation", str(tranformation), "takes", time_taken, "secs")
             
-            visualize_output(images)
-            if cv2.waitKey(0) & 0xFF == ord('q'):
+            if visualize_output(images):
                 break
 
     finally:
