@@ -27,18 +27,18 @@ from composition import *
 tranforms_to_apply = [generate_distance_image, get_histogram_prob_images, 
     perform_cost_calculation, perform_thresholding, perform_filtering, perform_trimap,
     perform_alpha_matting, perform_composition]
-keys_to_ignore = ["virt_center_coordinates"]
+keys_to_show = ["combined_image"]
 
 def visualize_output(images):
+    save_dir = "images"
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     for key, value in images.items():
-        print(key, value.shape, np.mean(value), np.std(value))
-        '''
-        if key not in keys_to_ignore:
+        if key in keys_to_show:
             cv2.imshow(key, value)
-        '''
 
     exit = False
-    cv2.imshow("Output Image", images["combined_image"])
     if cv2.waitKey(0) & 0xFF == ord('q'):
         exit = True
     
@@ -52,10 +52,11 @@ if __name__ == "__main__":
     else:
         reader = CameraReader()
     
-    print("Finished setting up reader of type", constants.read_format)
-
     try:
+        timing_values = {}
+
         while reader.has_next():
+            start_time = time.time()
             images = reader.get_next()
 
             if images is None:
@@ -63,15 +64,26 @@ if __name__ == "__main__":
                 break
             
             for tranformation in tranforms_to_apply:
+                trans_name = str(tranformation)
+
                 start_time = time.time()
                 tranformation(images)
-                time_taken = (time.time() - start_time)
-                print("Transformation", str(tranformation), "takes", time_taken, "secs")
+                trans_time = time.time() - start_time
+
+                # Record the time
+                if trans_name not in timing_values:
+                    timing_values[trans_name] = []
+                timing_values[trans_name].append(trans_time)
             
             if visualize_output(images):
                 break
+        
+        cv2.destroyAllWindows()
+        for key in timing_values:
+            values = np.array(timing_values[key])
+            print(key, np.mean(values), np.std(values))
 
     finally:
         reader.finish()
     
-    cv2.destroyAllWindows()
+    

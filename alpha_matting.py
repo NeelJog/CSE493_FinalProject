@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 def perform_alpha_matting(images):
-    image = images["image_center"].astype(np.float64)
+    image = images["image_center"].astype(np.float64)/255.0
     trimap = images["trimap_image"].astype(np.float64)
 
     # Get the alpha mat
