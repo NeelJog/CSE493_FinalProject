@@ -13,8 +13,15 @@ class ImageReader:
     def read_virt_image(self):
         # Read in the files
         original_image = cv2.imread("virtual_image.png")
-        virt_mask = cv2.imread("virtual_image_mask.png")
-        virt_mask = 255 - cv2.cvtColor(virt_mask, cv2.COLOR_BGR2GRAY)
+        
+        # Make the virtual mask
+        red_channel = original_image[ : , : , 0]
+        blue_channel = original_image[ : , : , 1]
+        green_channel = original_image[ : , : , 2]
+
+        virt_mask = np.logical_and(red_channel >= 255, blue_channel >= 255)
+        virt_mask = np.logical_and(virt_mask, green_channel >= 255)
+        virt_mask = 255 - 255 * virt_mask.astype(np.uint8)
         
         # Crop the original image to create the virtual image
         image_height, image_width, _ = original_image.shape
