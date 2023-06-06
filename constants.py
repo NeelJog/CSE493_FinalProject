@@ -1,4 +1,4 @@
-read_format = "dummy"
+read_format = "real"
 virt_obj_scale_factor = 0.5
 virtual_distance_to_m = 1000
 virtual_obj_depth_in_meters = 0.45

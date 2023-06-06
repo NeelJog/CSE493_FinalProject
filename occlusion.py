@@ -29,21 +29,6 @@ tranforms_to_apply = [generate_distance_image, get_histogram_prob_images,
     perform_alpha_matting, perform_composition]
 keys_to_show = ["combined_image"]
 
-def visualize_output(images):
-    save_dir = "images"
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    for key, value in images.items():
-        if key in keys_to_show:
-            cv2.imshow(key, value)
-
-    exit = False
-    if cv2.waitKey(0) & 0xFF == ord('q'):
-        exit = True
-    
-    return exit
-
 if __name__ == "__main__":
     # Get the reader
     reader = None
@@ -51,39 +36,30 @@ if __name__ == "__main__":
         reader = DummyReader()
     else:
         reader = CameraReader()
-    
-    try:
-        timing_values = {}
 
-        while reader.has_next():
-            start_time = time.time()
-            images = reader.get_next()
+    print("Created reader and are going to start rendering")
 
-            if images is None:
-                print("Got none from get_next")
-                break
-            
-            for tranformation in tranforms_to_apply:
-                trans_name = str(tranformation)
+    while True:
+        try:
 
+            while reader.has_next():
                 start_time = time.time()
-                tranformation(images)
-                trans_time = time.time() - start_time
+                images = dict(reader.get_next())
+                # print("Images of type", type(images))
 
-                # Record the time
-                if trans_name not in timing_values:
-                    timing_values[trans_name] = []
-                timing_values[trans_name].append(trans_time)
-            
-            if visualize_output(images):
-                break
+                if images is None:
+                    print("Got none from get_next")
+                    break
+
+                for tranformation in tranforms_to_apply:
+                    tranformation(images)
+
+                cv2.imshow("Result", images["combined_image"])
+                value = cv2.waitKey(1)
+
+                if value == 113:
+                    cv2.destroyAllWindows()
+                    break
         
-        cv2.destroyAllWindows()
-        for key in timing_values:
-            values = np.array(timing_values[key])
-            print(key, np.mean(values), np.std(values))
-
-    finally:
-        reader.finish()
-    
-    
+        except:
+            continue

@@ -37,16 +37,20 @@ def get_mask_loc_in_image(image, binary_mask):
 
 
 def generate_distance_image(images):
+    # print(images.keys())
+    depth_center = images["depth_center"]
+    # print(depth_center.shape, depth_center.dtype)
+    virtual_object_depth = np.mean(depth_center)
 
     def get_distance_val(real_depth_val):
         return_val = 0.0
 
         if real_depth_val == 0.0:
             return_val = 0.0
-        elif real_depth_val < constants.virtual_obj_depth_in_meters:
+        elif real_depth_val < virtual_object_depth:
             return_val = 1.0
         else:
-            x_p = (constants.virtual_obj_depth_in_meters)/(real_depth_val + constants.epsilon)
+            x_p = (virtual_object_depth)/(real_depth_val + constants.epsilon)
             return_val = ((constants.distance_constant_val ** x_p) - 1)/(constants.distance_constant_val - 1)
         
         return 1.0 * return_val

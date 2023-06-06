@@ -17,7 +17,9 @@ def get_probability_image(color_image, distance_image, region_mask):
     total_pixels = cv2.countNonZero(region_mask)
     color_probs = cv2.calcHist([image_hue], [0], region_mask, 
         [constants.color_histogram_bins], [0, constants.max_hue_value])
-    color_probs /= 1.0 * total_pixels
+    
+    total = max(1, np.sum(color_probs))
+    color_probs /= total
 
     # Get the probability using color
     def get_probability_value(color_value):
@@ -47,7 +49,7 @@ def get_histogram_prob_images(images):
 
     background_mask = np.logical_and(distance_image > 0, distance_image < 1.0)
     background_mask = background_mask.astype(np.uint8) * 255
-
+    
     # Make the probability image
     images["foreground_prob"] = get_probability_image(color_image, distance_image, foreground_mask)
     images["background_prob"] = get_probability_image(color_image, 1.0 - distance_image, background_mask)
